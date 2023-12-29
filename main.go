@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"io/ioutil"
 	"log"
 	"math"
+	"os"
 	"strconv"
 	"time"
 
@@ -29,33 +29,26 @@ type CoordinateType struct {
 var cities = make([]*CityType, 0)
 
 func main() {
+	defer erapse.ShowErapsedTIme(time.Now())
 
 	// set log
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 
-	// set flag
-	getJsonPtr := flag.Bool("getCitiesJson", false, "get cities json file")
+	var lon, lat float64
+	var err error
 
-	flag.Parse()
+	log.Println("os.Args", os.Args)
 
-	if *getJsonPtr {
-		getJson()
-	} else {
-		var lon, lat float64
-		var err error
-		log.Println("flag.Args()", flag.Args())
-
-		if lon, err = strconv.ParseFloat(flag.Args()[1], 64); err != nil {
-			log.Println(err)
-			return
-		}
-		if lat, err = strconv.ParseFloat(flag.Args()[0], 64); err != nil {
-			log.Println(err)
-			return
-		}
-		readJson()
-		findNearestCity(lat, lon)
+	if lon, err = strconv.ParseFloat(os.Args[2], 64); err != nil {
+		log.Println(err)
+		return
 	}
+	if lat, err = strconv.ParseFloat(os.Args[1], 64); err != nil {
+		log.Println(err)
+		return
+	}
+	readJson()
+	findNearestCity(lat, lon)
 }
 
 func readJson() {
@@ -104,6 +97,9 @@ func findNearestCity(lat float64, lon float64) {
 	}
 
 	log.Println("nearest city", nearestCity.name)
+	log.Println("id", nearestCity.id)
+	log.Println("lat", nearestCity.lat)
+	log.Println("lon", nearestCity.lon)
 }
 
 func dist(lat0 float64, lat1 float64, lon0 float64, lon1 float64) (distance float64) {
