@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"log"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/UedaTakeyuki/erapse"
@@ -31,8 +33,29 @@ func main() {
 	// set log
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 
-	readJson()
-	findNearestCity(35.596, 139.610)
+	// set flag
+	getJsonPtr := flag.Bool("getCitiesJson", false, "get cities json file")
+
+	flag.Parse()
+
+	if *getJsonPtr {
+		getJson()
+	} else {
+		var lon, lat float64
+		var err error
+		log.Println("flag.Args()", flag.Args())
+
+		if lon, err = strconv.ParseFloat(flag.Args()[1], 64); err != nil {
+			log.Println(err)
+			return
+		}
+		if lat, err = strconv.ParseFloat(flag.Args()[0], 64); err != nil {
+			log.Println(err)
+			return
+		}
+		readJson()
+		findNearestCity(lat, lon)
+	}
 }
 
 func readJson() {
@@ -87,5 +110,9 @@ func dist(lat0 float64, lat1 float64, lon0 float64, lon1 float64) (distance floa
 	//	defer erapse.ShowErapsedTIme(time.Now())
 
 	distance = math.Pow((lat0-lat1), 2) + math.Pow((lon0-lon1), 2)
+	return
+}
+
+func getJson() {
 	return
 }
