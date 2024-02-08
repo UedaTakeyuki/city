@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -13,7 +14,7 @@ import (
 )
 
 type CityType struct {
-	ID      int            `json:"id"`
+	ID      int64          `json:"id"`
 	Name    string         `json:"name"`
 	State   string         `json:"state"`
 	Country string         `json:"country"`
@@ -49,6 +50,8 @@ func main() {
 	}
 	readJson()
 	findNearestCity(lat, lon)
+	// dumpBinaryFile()
+	dumpToDB()
 }
 
 func readJson() {
@@ -65,7 +68,7 @@ func readJson() {
 }
 
 type nearestCityType struct {
-	id      int
+	id      int64
 	name    string
 	lat     float64
 	lon     float64
@@ -111,4 +114,54 @@ func dist(lat0 float64, lat1 float64, lon0 float64, lon1 float64) (distance floa
 
 func getJson() {
 	return
+}
+
+/*
+func dumpBinaryFile() {
+	defer erapse.ShowErapsedTIme(time.Now())
+
+	path := "city.list.bin"
+
+	f, err := os.Create(path)
+	if err != nil {
+		log.Println(err)
+	}
+	for _, candidateCity := range cities {
+		//		log.Println(*candidateCity)
+		err = binary.Write(f, binary.LittleEndian, candidateCity)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	err = f.Close()
+	if err != nil {
+		log.Println(err)
+	}
+}
+*/
+
+func dumpToDB() {
+	defer erapse.ShowErapsedTIme(time.Now())
+
+	path := dbFileName
+
+	if err := initializeSQL(path); err != nil {
+		log.Println(err)
+	} else {
+		var tx *sql.Tx
+		if tx, err = createTransaction(); err != nil {
+			log.Println(err)
+		} else {
+			for _, candidateCity := range cities {
+				//		log.Println(*candidateCity)
+				if err = transactionAdd(tx, candidateCity); err != nil {
+					log.Println(err)
+				}
+			}
+			if err = transactionCommit(tx); err != nil {
+				log.Println(err)
+			}
+		}
+
+	}
 }
