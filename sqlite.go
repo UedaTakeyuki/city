@@ -77,23 +77,45 @@ func createTransaction() (tx *sql.Tx, err error) {
 	return
 }
 
-func transactionAdd(tx *sql.Tx, city *CityType) (err error) {
-	defer erapse.ShowErapsedTIme(time.Now())
+func transactionAdd( /*tx *sql.Tx, */ stmt *sql.Stmt, city *CityType) (err error) {
+	//	defer erapse.ShowErapsedTIme(time.Now())
 
 	// make params
-	params := []qb.Param{{Name: "ID", Value: city.ID},
-		{Name: "Name", Value: city.Name},
-		{Name: "State", Value: city.State},
-		{Name: "Country", Value: city.Country},
-		{Name: "Lon", Value: city.Coord.Lon},
-		{Name: "Lat", Value: city.Coord.Lat}}
-
-	_, err = tx.Exec(querybuilder.SetTableName(tableName).ReplaceInto(params).QueryString())
+	/*
+		params := []qb.Param{{Name: "ID", Value: city.ID},
+			{Name: "Name", Value: city.Name},
+			{Name: "State", Value: city.State},
+			{Name: "Country", Value: city.Country},
+			{Name: "Lon", Value: city.Coord.Lon},
+			{Name: "Lat", Value: city.Coord.Lat}}
+		queryStr := querybuilder.SetTableName(tableName).ReplaceInto(params).QueryString()
+	*/
+	if _, err = stmt.Exec(city.ID, city.Name, city.State, city.Country, city.Coord.Lon, city.Coord.Lat); err != nil {
+		//		log.Println(queryStr)
+		log.Println(err)
+	}
 
 	return
 }
 
 func transactionCommit(tx *sql.Tx) (err error) {
 	err = tx.Commit()
+	return
+}
+
+func query() (rows *sql.Rows, err error) {
+	defer erapse.ShowErapsedTIme(time.Now())
+	columns := []string{"Name", "State", "Country", "Lon", "Lat"}
+	rows, err = SQLiteptr.Query(querybuilder.SetTableName(tableName).Select(columns).QueryString())
+
+	return
+}
+
+func prepare(tx *sql.Tx) (stmt *sql.Stmt, err error) {
+	defer erapse.ShowErapsedTIme(time.Now())
+
+	queryStr := fmt.Sprintf(`REPLACE INTO %s (ID, Name, State, Country, Lon, Lat) VALUES(?, ?, ?, ?, ?, ?)`, tableName)
+	stmt, err = tx.Prepare(queryStr)
+
 	return
 }

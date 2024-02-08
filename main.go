@@ -152,16 +152,22 @@ func dumpToDB() {
 		if tx, err = createTransaction(); err != nil {
 			log.Println(err)
 		} else {
-			for _, candidateCity := range cities {
-				//		log.Println(*candidateCity)
-				if err = transactionAdd(tx, candidateCity); err != nil {
+			var stmt *sql.Stmt
+			if stmt, err = prepare(tx); err != nil {
+				log.Println(err)
+			} else {
+				for _, candidateCity := range cities {
+					//		log.Println(*candidateCity)
+					if err = transactionAdd( /*tx, */ stmt, candidateCity); err != nil {
+						log.Println(err)
+					}
+				}
+				if err = transactionCommit(tx); err != nil {
 					log.Println(err)
 				}
-			}
-			if err = transactionCommit(tx); err != nil {
-				log.Println(err)
 			}
 		}
 
 	}
+	query()
 }
