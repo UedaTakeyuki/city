@@ -48,10 +48,17 @@ func main() {
 		log.Println(err)
 		return
 	}
-	readJson()
-	findNearestCity(lat, lon)
+	//	readJson()
+	initializeSQL(dbFileName)
+	var rows *sql.Rows
+	if rows, err = query(); err != nil {
+		log.Println(err)
+	} else {
+		findNearestCityFromRows(rows, lat, lon)
+	}
+	//findNearestCity(lat, lon)
 	// dumpBinaryFile()
-	dumpToDB()
+	// dumpToDB()
 }
 
 func readJson() {
@@ -140,6 +147,7 @@ func dumpBinaryFile() {
 }
 */
 
+/*
 func dumpToDB() {
 	defer erapse.ShowErapsedTIme(time.Now())
 
@@ -158,7 +166,7 @@ func dumpToDB() {
 			} else {
 				for _, candidateCity := range cities {
 					//		log.Println(*candidateCity)
-					if err = transactionAdd( /*tx, */ stmt, candidateCity); err != nil {
+					if err = transactionAdd(stmt, candidateCity); err != nil {
 						log.Println(err)
 					}
 				}
@@ -171,3 +179,4 @@ func dumpToDB() {
 	}
 	query()
 }
+*/

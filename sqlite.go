@@ -105,8 +105,10 @@ func transactionCommit(tx *sql.Tx) (err error) {
 
 func query() (rows *sql.Rows, err error) {
 	defer erapse.ShowErapsedTIme(time.Now())
-	columns := []string{"Name", "State", "Country", "Lon", "Lat"}
-	rows, err = SQLiteptr.Query(querybuilder.SetTableName(tableName).Select(columns).QueryString())
+	columns := []string{"ID", "Name", "Lon", "Lat"}
+	queryStr := querybuilder.SetTableName(tableName).Select(columns).QueryString()
+	log.Println(queryStr)
+	rows, err = SQLiteptr.Query(queryStr)
 
 	return
 }
@@ -118,4 +120,46 @@ func prepare(tx *sql.Tx) (stmt *sql.Stmt, err error) {
 	stmt, err = tx.Prepare(queryStr)
 
 	return
+}
+
+func findNearestCityFromRows(rows *sql.Rows, lat float64, lon float64) {
+	defer erapse.ShowErapsedTIme(time.Now())
+
+	var nearestCity nearestCityType
+	rows.Next()
+	if err := rows.Scan(
+		&nearestCity.id,
+		&nearestCity.name,
+		&nearestCity.lat,
+		&nearestCity.lon,
+	); err != nil {
+		log.Println(err)
+		return
+	}
+	nearestCity.sqrDist = dist(lat, nearestCity.lat, lon, nearestCity.lon)
+
+	var candidateCity nearestCityType
+	for rows.Next() {
+		if err := rows.Scan(
+			&candidateCity.id,
+			&candidateCity.name,
+			&candidateCity.lon,
+			&candidateCity.lat,
+		); err != nil {
+			log.Println(err)
+		} else {
+			distance := dist(lat, candidateCity.lat, lon, candidateCity.lon)
+			if distance < nearestCity.sqrDist {
+				nearestCity.id = candidateCity.id
+				nearestCity.name = candidateCity.name
+				nearestCity.lat = candidateCity.lat
+				nearestCity.lon = candidateCity.lon
+				nearestCity.sqrDist = distance
+			}
+		}
+	}
+	log.Println("nearest city", nearestCity.name)
+	log.Println("id", nearestCity.id)
+	log.Println("lat", nearestCity.lat)
+	log.Println("lon", nearestCity.lon)
 }
