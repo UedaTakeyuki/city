@@ -25,10 +25,17 @@ const sqlCreateTable = `CREATE TABLE IF NOT EXISTS %s (
 	Lat      REAL
 )`
 
+const SquaredDistance = "(Lat - %f)*(Lat - %f) + (Lon - %f)*(Lon - %f)"
+
 const dbFileName = "city.sql3"
 
 var SQLiteptr *sql.DB
 var querybuilder qb.Query
+
+func squaredDistance(lat float64, lon float64) (result string) {
+	result = fmt.Sprintf(SquaredDistance, lat, lat, lon, lon)
+	return
+}
 
 func initializeSQL(dbfile string) (err error) {
 	defer erapse.ShowErapsedTIme(time.Now())
@@ -162,4 +169,49 @@ func findNearestCityFromRows(rows *sql.Rows, lat float64, lon float64) {
 	log.Println("id", nearestCity.id)
 	log.Println("lat", nearestCity.lat)
 	log.Println("lon", nearestCity.lon)
+}
+
+func getRowsOfClosingCities(lat float64, lon float64) (rows *sql.Rows, err error) {
+	defer erapse.ShowErapsedTIme(time.Now())
+	var closerThan float64
+	closerThan = 0.1
+
+	for {
+		log.Println("closerThan", closerThan)
+		if cityNumbers := getNumberOfClosingCities(closerThan, lat, lon); cityNumbers != 0 {
+			log.Println("Cities", cityNumbers)
+			rows, err = getClosingCitiesRows(closerThan, lat, lon)
+			return
+		}
+		closerThan = closerThan * 10.0
+	}
+}
+
+func getNumberOfClosingCities(closerThan float64, lat float64, lon float64) (number int) {
+	defer erapse.ShowErapsedTIme(time.Now())
+
+	columns := []string{"count(*)"}
+	queryStr := querybuilder.SetTableName(tableName).Select(columns).Where(qb.LessThan(squaredDistance(lat, lon), closerThan)).QueryString()
+	log.Println(queryStr)
+	rows, err := SQLiteptr.Query(queryStr)
+	if err != nil {
+		log.Println(err)
+	} else {
+		rows.Next()
+		if err = rows.Scan(&number); err != nil {
+			log.Println(err)
+		}
+	}
+	return
+}
+
+func getClosingCitiesRows(closerThan float64, lat float64, lon float64) (rows *sql.Rows, err error) {
+	defer erapse.ShowErapsedTIme(time.Now())
+
+	columns := []string{"ID", "Name", "Lon", "Lat"}
+	queryStr := querybuilder.SetTableName(tableName).Select(columns).Where(qb.LessThan(squaredDistance(lat, lon), closerThan)).QueryString()
+	log.Println(queryStr)
+	rows, err = SQLiteptr.Query(queryStr)
+
+	return
 }

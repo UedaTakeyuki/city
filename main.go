@@ -51,7 +51,8 @@ func main() {
 	//	readJson()
 	initializeSQL(dbFileName)
 	var rows *sql.Rows
-	if rows, err = query(); err != nil {
+	//	if rows, err = query(); err != nil {
+	if rows, err = getRowsOfClosingCities(lat, lon); err != nil {
 		log.Println(err)
 	} else {
 		findNearestCityFromRows(rows, lat, lon)
